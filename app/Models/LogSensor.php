@@ -18,4 +18,7 @@ class LogSensor extends Model
         'sisa_memori',
         'max_size_memori',
     ] ;
+    protected $casts = [
+        'record_at' => 'datetime',
+    ];
 }

@@ -43,7 +43,8 @@ return [
 
             // A specific client id to be used for the connection. If omitted,
             // a random client id will be generated for each new connection.
-            'client_id' => env('MQTT_CLIENT_ID', 'laravel_client'),
+            // 'client_id' => env('MQTT_CLIENT_ID', 'laravel_client'),
+            'client_id' => env('MQTT_CLIENT_ID', 'laravel') . '_' . uniqid(),
 
             // Whether a clean session shall be used and requested by the client.
             // A clean session will let the broker forget about subscriptions and
