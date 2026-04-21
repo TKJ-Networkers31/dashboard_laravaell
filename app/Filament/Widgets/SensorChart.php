@@ -3,14 +3,14 @@
 namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
-use App\Models\LogSensor;
+use App\Services\Lab\LabService;
 use Carbon\Carbon;
 
 class SensorChart extends ChartWidget
 {
     // protected int | string | array $columnSpan = 'full';
-    protected static ?int $sort = 3;
-    protected ?string $pollingInterval = '5s';
+    protected static ?int $sort = 4;
+    // protected ?string $pollingInterval = '5s';
 
     // protected int | string | array $columnSpan = 1;
 
@@ -18,21 +18,23 @@ class SensorChart extends ChartWidget
 
     protected function getData(): array
     {
-        $data = LogSensor::latest('record_at')->take(10)->get()->reverse();
+        $data = app(\App\Services\Lab\LabService::class)->getAll();
+        $chart = collect($data['chart'] ?? []);
 
         return [
             'datasets' => [
                 [
                     'label' => 'Suhu',
-                    'data' => $data->pluck('suhu'),
+                    'data' => $chart->pluck('suhu'),
                 ],
             ],
-            'labels' => $data->pluck('record_at')->map(function ($time) {
-                // return $time->format('H:i:s');
-                return Carbon::parse($time)->format('H:i:s');
-            }),
+            'labels' => $chart->pluck('record_at')->map(
+                fn ($t) => \Carbon\Carbon::parse($t)->format('H:i:s')
+            ),
         ];
     }
+
+
 
     protected function getType(): string
     {

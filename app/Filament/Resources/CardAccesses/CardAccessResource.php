@@ -20,7 +20,7 @@ class CardAccessResource extends Resource
 {
     protected static ?string $model = CardAccess::class;
 
-    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedRectangleStack;
+    protected static string|BackedEnum|null $navigationIcon = 'heroicon-o-lock-open';
 
     protected static ?string $recordTitleAttribute = 'App\Models\CardAccess';
 
