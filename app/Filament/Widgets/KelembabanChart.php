@@ -4,13 +4,11 @@ namespace App\Filament\Widgets;
 
 use Filament\Widgets\ChartWidget;
 use App\Services\Lab\LabService;
-use Carbon\Carbon;
 
 class KelembabanChart extends ChartWidget
 {
     protected static ?int $sort = 4;
-    // protected ?string $pollingInterval = '5s';
-
+    protected ?string $pollingInterval = '5s';
     protected ?string $heading = 'Grafik Kelembaban';
 
     protected function getData(): array
@@ -30,12 +28,7 @@ class KelembabanChart extends ChartWidget
             ),
         ];
     }
-    protected function getListeners(): array
-    {
-        return [
-            'lab-update' => '$refresh',
-        ];
-    }
+
     protected function getType(): string
     {
         return 'line';

@@ -25,6 +25,7 @@ use App\Filament\Widgets\LabMonitor;
 use App\Filament\Widgets\UserMonitor;
 use App\Filament\Widgets\TempHum;
 use Filament\Navigation\NavigationItem;
+use App\Filament\Pages\Auth\Login;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -44,7 +45,6 @@ class AdminPanelProvider extends PanelProvider
                     ->group('Laporan External')
                     ->sort(3),
             ])
-
             ->sidebarWidth('15rem')
             ->sidebarFullyCollapsibleOnDesktop()
             ->colors([
@@ -84,24 +84,6 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->authMiddleware([
                 Authenticate::class,
-            ])
-            ->renderHook(
-            'panels::head.done',
-            fn () => new \Illuminate\Support\HtmlString("
-                <style>
-                    /* Memberikan efek card yang lebih timbul */
-                    .fi-wi-stats-overview-stat {
-                        border: 1px solid rgba(var(--primary-500), 0.1) !important;
-                        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05) !important;
-                        transition: transform 0.2s ease-in-out;
-                    }
-                    /* Efek hover agar interaktif */
-                    .fi-wi-stats-overview-stat:hover {
-                        transform: scale(1.02);
-                        border-color: rgba(var(--primary-500), 0.5) !important;
-                    }
-                </style>
-            ")
-        );
+            ]);
     }
 }

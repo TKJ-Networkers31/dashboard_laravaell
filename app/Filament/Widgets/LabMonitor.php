@@ -13,8 +13,12 @@ class LabMonitor extends BaseWidget
 {
     protected static ?int $sort = 2;
 
+    // Menambahkan polling agar data update otomatis tanpa refresh
+    protected ?string $pollingInterval = '5s';
+
     protected function getStats(): array
     {
+        // Mengambil data dari service terpusat
         $data = app(LabService::class)->getAll();
 
         $log = $data['latest'] ?? [];
@@ -172,20 +176,18 @@ class LabMonitor extends BaseWidget
         return 3;
     }
 
-    protected function getListeners(): array
+    public function toggleAutoMode(): void
     {
-        return [
-            'lab-update' => '$refresh',
-        ];
-    }
+        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
 
-    // ===== ACTIONS (TIDAK DIUBAH) =====
-
-    public function toggleAutoMode()
-    {
-        $device = DeviceState::where('device','esp32_smartlab_1')->first();
-
-        if (!$device) return;
+        if (!$device) {
+            Notification::make()
+                ->title('Error')
+                ->body('Device tidak ditemukan.')
+                ->danger()
+                ->send();
+            return;
+        }
 
         $newState = !$device->mode_auto;
 
@@ -194,17 +196,24 @@ class LabMonitor extends BaseWidget
         ]));
 
         Notification::make()
-            ->title('Mode ' . ($newState ? 'AUTO' : 'MANUAL'))
+            ->title('Mode ' . ($newState ? 'AUTO' : 'MANUAL') . ' Aktif')
+            ->body('Mode operasi berhasil diubah ke ' . ($newState ? 'Otomatis' : 'Manual') . '.')
             ->success()
-            ->duration(2000)
             ->send();
     }
 
-    public function toggleLamp($lamp)
+    public function toggleLamp(string $lamp): void
     {
-        $device = DeviceState::where('device','esp32_smartlab_1')->first();
+        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
 
-        if (!$device) return;
+        if (!$device) {
+            Notification::make()
+                ->title('Error')
+                ->body('Device tidak ditemukan.')
+                ->danger()
+                ->send();
+            return;
+        }
 
         $newState = !$device->$lamp;
 
@@ -212,22 +221,31 @@ class LabMonitor extends BaseWidget
             ? 'lab1/control/lamp1_2'
             : 'lab1/control/lamp3_4';
 
+        $label = $lamp === 'lampu1_2' ? 'Lampu 1 & 2' : 'Lampu 3 & 4';
+
         MQTT::publish($topic, json_encode([
             $lamp => $newState
         ]));
 
         Notification::make()
-            ->title("Toggle $lamp")
+            ->title($label . ' ' . ($newState ? 'Dinyalakan' : 'Dipadamkan'))
+            ->body($label . ' berhasil ' . ($newState ? 'dinyalakan' : 'dipadamkan') . '.')
             ->success()
-            ->duration(2000)
             ->send();
     }
 
-    public function toggleDoor()
+    public function toggleDoor(): void
     {
-        $device = DeviceState::where('device','esp32_smartlab_1')->first();
+        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
 
-        if (!$device) return;
+        if (!$device) {
+            Notification::make()
+                ->title('Error')
+                ->body('Device tidak ditemukan.')
+                ->danger()
+                ->send();
+            return;
+        }
 
         $newState = !$device->pintu;
 
@@ -236,9 +254,9 @@ class LabMonitor extends BaseWidget
         ]));
 
         Notification::make()
-            ->title('Toggle pintu')
+            ->title('Pintu ' . ($newState ? 'Dibuka' : 'Dikunci'))
+            ->body('Akses pintu berhasil ' . ($newState ? 'dibuka' : 'dikunci') . '.')
             ->success()
-            ->duration(2000)
             ->send();
     }
 }

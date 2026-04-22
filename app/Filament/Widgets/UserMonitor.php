@@ -5,6 +5,7 @@ namespace App\Filament\Widgets;
 use Filament\Widgets\StatsOverviewWidget as BaseWidget;
 use Filament\Widgets\StatsOverviewWidget\Stat;
 use App\Models\DeviceState;
+use App\Services\Lab\LabService;
 use Filament\Notifications\Notification;
 use PhpMqtt\Client\Facades\MQTT;
 
@@ -12,11 +13,16 @@ class UserMonitor extends BaseWidget
 {
     protected static ?int $sort = 1;
 
+    // Tambahkan polling agar status Lock/User terupdate otomatis
+    protected ?string $pollingInterval = '5s';
+
     protected function getStats(): array
     {
-        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
+        // Mengambil data melalui service agar sinkron dengan widget lain
+        $data = app(LabService::class)->getAll();
+        $deviceData = $data['device'] ?? [];
 
-        if (!$device) {
+        if (empty($deviceData)) {
             return [
                 Stat::make('Status', 'OFFLINE')
                     ->description('Device belum terhubung')
@@ -24,9 +30,10 @@ class UserMonitor extends BaseWidget
             ];
         }
 
-        $user = $device->user ?? 'none';
+        // Konversi ke object atau gunakan array sesuai data dari service
+        $user = $deviceData['user'] ?? 'none';
         $isUsed = $user !== 'none';
-        $isLocked = (bool) $device->locked;
+        $isLocked = (bool) ($deviceData['locked'] ?? false);
 
         return [
 
@@ -60,31 +67,29 @@ class UserMonitor extends BaseWidget
         return 2;
     }
 
-    // ===== TOGGLE LOCK MQTT =====
-    public function toggleLock()
+    public function toggleLock(): void
     {
         $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
 
         if (!$device) {
             Notification::make()
-                ->title('Device tidak ditemukan')
+                ->title('Device Tidak Ditemukan')
+                ->body('Tidak dapat menemukan device esp32_smartlab_1.')
                 ->danger()
                 ->send();
-
             return;
         }
 
-        $newState = ! (bool) $device->locked;
+        $newState = !(bool) $device->locked;
 
-        // publish ke MQTT
+        // Payload JSON tetap sesuai kode asli Anda
         MQTT::publish('lab1/control/lock', json_encode([
             'locked' => $newState
         ]));
 
-        // notif UI
         Notification::make()
-            ->title($newState ? 'System LOCKED' : 'System UNLOCKED')
-            ->body('Perintah berhasil dikirim ke device')
+            ->title('System ' . ($newState ? 'LOCKED' : 'UNLOCKED'))
+            ->body('Perintah berhasil dikirim ke device.')
             ->success()
             ->send();
     }

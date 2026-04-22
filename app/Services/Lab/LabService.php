@@ -1,18 +1,22 @@
 <?php
+
 namespace App\Services\Lab;
 
 use App\Models\LogSensor;
 use App\Models\DeviceState;
-use Illuminate\Support\Facades\Cache;
 
 class LabService
 {
-    public function getAll()
+    public function getAll(): array
     {
-        return Cache::get('lab.dashboard', [
-            'latest' => null,
-            'chart' => collect(),
-            'device' => null,
-        ]);
+        $latest = LogSensor::latest('record_at')->first();
+        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
+        $chart = LogSensor::latest('record_at')->limit(20)->get()->reverse();
+
+        return [
+            'latest' => $latest ? $latest->toArray() : [],
+            'device' => $device ? $device->toArray() : [],
+            'chart'  => $chart,
+        ];
     }
 }
