@@ -83,7 +83,7 @@ class UserMonitor extends BaseWidget
         $newState = !(bool) $device->locked;
 
         // Payload JSON tetap sesuai kode asli Anda
-        MQTT::publish('lab1/control/lock', json_encode([
+        MQTT::publish('lab1/control/locked', json_encode([
             'locked' => $newState
         ]));
 
