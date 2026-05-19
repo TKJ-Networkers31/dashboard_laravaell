@@ -77,9 +77,7 @@
         }
 
         /* Heading */
-        .form-heading {
-            margin-bottom: 32px;
-        }
+        .form-heading { margin-bottom: 32px; }
         .form-badge {
             font-family: 'Space Mono', monospace;
             font-size: 10px;
@@ -221,7 +219,6 @@
                 rgba(0,60,120,0.4) 100%);
         }
 
-        /* Grid lines on bg */
         .bg-grid {
             position: absolute; inset: 0;
             background-image:
@@ -230,7 +227,6 @@
             background-size: 50px 50px;
         }
 
-        /* Scan line */
         .scan-line {
             position: absolute; top: -2px; left: 0;
             width: 100%; height: 2px;
@@ -239,7 +235,6 @@
         }
         @keyframes scan { 0% { top: -2px; } 100% { top: 100%; } }
 
-        /* Floating nodes */
         .node {
             position: absolute;
             width: 6px; height: 6px;
@@ -252,7 +247,6 @@
             50% { opacity: 0.9; transform: scale(1.6); }
         }
 
-        /* Content on right */
         .bg-content {
             position: absolute;
             inset: 0;
@@ -285,11 +279,7 @@
             margin-bottom: 32px;
         }
 
-        /* Stats row */
-        .stats-row {
-            display: flex;
-            gap: 16px;
-        }
+        .stats-row { display: flex; gap: 16px; }
         .stat-pill {
             background: rgba(0,180,255,0.07);
             border: 1px solid rgba(0,180,255,0.15);
@@ -310,7 +300,6 @@
             letter-spacing: 1px;
         }
 
-        /* Status bar */
         .status-bar {
             display: flex;
             align-items: center;
@@ -330,14 +319,12 @@
             letter-spacing: 1px;
         }
 
-        /* corner decorations */
         .corner { position: absolute; width: 14px; height: 14px; border-color: rgba(0,180,255,0.25); }
         .tl { top: 12px; left: 12px; border-top: 1.5px solid; border-left: 1.5px solid; }
         .tr { top: 12px; right: 12px; border-top: 1.5px solid; border-right: 1.5px solid; }
         .bl { bottom: 12px; left: 12px; border-bottom: 1.5px solid; border-left: 1.5px solid; }
         .br { bottom: 12px; right: 12px; border-bottom: 1.5px solid; border-right: 1.5px solid; }
 
-        /* Responsive */
         @media (max-width: 768px) {
             body { flex-direction: column; }
             .form-side { width: 100%; min-width: unset; padding: 40px 24px; }
@@ -369,10 +356,11 @@
                 <p>Masuk untuk mengakses Smart Lab IOT Dashboard</p>
             </div>
 
-            @if (->any())
+            {{-- PERBAIKAN: $errors adalah variable Blade standar Laravel --}}
+            @if ($errors->any())
                 <div class="error-box">
-                    @foreach (->all() as )
-                        <div>{{  }}</div>
+                    @foreach ($errors->all() as $error)
+                        <div>{{ $error }}</div>
                     @endforeach
                 </div>
             @endif
@@ -423,7 +411,6 @@
         <div class="bg-grid"></div>
         <div class="scan-line"></div>
 
-        {{-- floating nodes --}}
         <div class="node" style="top:15%;left:20%;animation-delay:0s"></div>
         <div class="node" style="top:35%;left:75%;animation-delay:1s"></div>
         <div class="node" style="top:60%;left:15%;animation-delay:2s"></div>

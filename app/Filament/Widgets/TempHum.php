@@ -13,26 +13,46 @@ class TempHum extends StatsOverviewWidget
 
     protected function getStats(): array
     {
-        $data = app(LabService::class)->getAll();
+        $data   = app(LabService::class)->getAll();
         $latest = $data['latest'];
-        $chart = collect($data['chart']);
+        $chart  = collect($data['chart']);
 
         if (empty($latest)) {
-            return [Stat::make('Status', 'Menunggu data...')->color('gray')];
+            return [
+                Stat::make('Status', 'Menunggu data sensor...')
+                    ->description('MQTT belum menerima data')
+                    ->color('gray'),
+            ];
         }
 
-        return [
-            Stat::make('Suhu Ruangan', $latest['suhu'] . '°C')
-                ->description($latest['suhu'] > 30 ? 'Panas' : 'Normal')
-                ->chart($chart->pluck('suhu')->toArray())
-                ->color($latest['suhu'] > 30 ? 'danger' : 'success'),
+        // DB menyimpan sebagai 'suhu' dan 'kelembapan'
+        $suhu      = round((float) ($latest['suhu']      ?? 0), 1);
+        $kelembapan= round((float) ($latest['kelembapan'] ?? 0), 1);
 
-            Stat::make('Kelembapan', $latest['kelembapan'] . '%')
-                ->description('Kondisi udara lab')
-                ->chart($chart->pluck('kelembapan')->toArray())
-                ->color('info'),
+        $suhuChart      = $chart->pluck('suhu')->map(fn ($v) => (float) $v)->toArray();
+        $kelembapanChart= $chart->pluck('kelembapan')->map(fn ($v) => (float) $v)->toArray();
+
+        return [
+            Stat::make('Suhu Ruangan', $suhu . ' °C')
+                ->description($suhu > 30 ? '🔴 Panas — di atas normal' : '🟢 Normal')
+                ->chart($suhuChart)
+                ->color($suhu > 30 ? 'danger' : 'success'),
+
+            Stat::make('Kelembapan', $kelembapan . ' %')
+                ->description(
+                    $kelembapan > 80
+                        ? '💧 Sangat lembap'
+                        : ($kelembapan < 40 ? '🌵 Terlalu kering' : '🟢 Kondisi ideal')
+                )
+                ->chart($kelembapanChart)
+                ->color(
+                    ($kelembapan > 80 || $kelembapan < 40) ? 'warning' : 'info'
+                ),
         ];
     }
 
-    protected function getColumns(): int { return 2; }
+    protected function getColumns(): int
+    {
+        return 2;
+    }
 }

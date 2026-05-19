@@ -25,7 +25,6 @@ use App\Filament\Widgets\LabMonitor;
 use App\Filament\Widgets\UserMonitor;
 use App\Filament\Widgets\TempHum;
 use Filament\Navigation\NavigationItem;
-use App\Filament\Pages\Auth\Login;
 
 class AdminPanelProvider extends PanelProvider
 {
@@ -49,9 +48,9 @@ class AdminPanelProvider extends PanelProvider
             ->sidebarFullyCollapsibleOnDesktop()
             ->colors([
                 'primary' => Color::Blue,
-                'danger' => Color::Rose,
-                'gray' => Color::Gray,
-                'info' => Color::Blue,
+                'danger'  => Color::Rose,
+                'gray'    => Color::Gray,
+                'info'    => Color::Blue,
                 'success' => Color::Emerald,
                 'warning' => Color::Orange,
             ])
@@ -62,13 +61,20 @@ class AdminPanelProvider extends PanelProvider
             ])
             ->discoverWidgets(in: app_path('Filament/Widgets'), for: 'App\Filament\Widgets')
             ->widgets([
+                // sort=0 (default Filament)
                 AccountWidget::class,
                 FilamentInfoWidget::class,
+                // sort=1
                 UserMonitor::class,
+                // sort=2
                 LabMonitor::class,
+                // sort=3
                 TempHum::class,
+                // sort=4
                 SensorChart::class,
+                // sort=5
                 KelembabanChart::class,
+                // sort=6
                 SensorTable::class,
             ])
             ->middleware([

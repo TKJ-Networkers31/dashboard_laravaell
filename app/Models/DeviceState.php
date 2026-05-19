@@ -8,10 +8,10 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 class DeviceState extends Model
 {
     use HasFactory;
-    public $timestamps = false;
-    protected $table = 'device_state';
 
-    // public $timestamps = false;
+    public $timestamps = false;
+    protected $table   = 'device_state';
+
     protected $fillable = [
         'device',
         'IP',
@@ -22,8 +22,9 @@ class DeviceState extends Model
         'UID',
         'pintu',
         'lampu1_2',
-        'lampu3_4'
+        'lampu3_4',
     ];
+
     protected $casts = [
         'mode_auto' => 'boolean',
         'locked'    => 'boolean',
