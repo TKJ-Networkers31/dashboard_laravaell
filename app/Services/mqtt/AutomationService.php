@@ -49,7 +49,6 @@ class AutomationService
         }
 
         if ($deviceState->locked) {
-            // Sistem terkunci, tolak semua akses kartu
             MQTT::publish('lab1/control/login', json_encode([
                 'statusAccess' => 'locked',
                 'user'         => 'none',
@@ -62,7 +61,6 @@ class AutomationService
         $card = CardAccess::findByUid($uid);
 
         if (! $card) {
-            // Kartu tidak terdaftar
             Log::info('[AutomationService] UID not found: ' . $uid);
             MQTT::publish('lab1/control/login', json_encode([
                 'statusAccess' => 'denied',
@@ -72,23 +70,57 @@ class AutomationService
             return;
         }
 
-        // Kartu terdaftar → kirim sukses
-        // ESP32 akan toggle login/logout sendiri berdasarkan state internalnya.
-        // Server hanya memvalidasi bahwa kartu dikenal.
-        Log::info('[AutomationService] Access granted for: ' . $card->pengguna . ' UID: ' . $uid);
+        // ---------------------------------------------------------------
+        // Kartu terdaftar → tentukan apakah ini login atau logout
+        // ---------------------------------------------------------------
+        if ($status === 'logout') {
+            // LOGOUT: reset state di DB
+            $deviceState->update([
+                'login' => false,
+                'user'  => 'none',
+                'UID'   => 'none',
+            ]);
 
-        MQTT::publish('lab1/control/login', json_encode([
-            'statusAccess' => 'success',
-            'user'         => $card->pengguna,
-            'uid'          => $uid,
-        ]));
+            Log::info('[AutomationService] LOGOUT: ' . $card->pengguna . ' UID: ' . $uid);
+
+            MQTT::publish('lab1/control/login', json_encode([
+                'statusAccess' => 'success',
+                'user'         => $card->pengguna,
+                'uid'          => $uid,
+            ]));
+
+        } else {
+            // LOGIN: cek apakah sudah ada yang login
+            if ($deviceState->login && $deviceState->UID !== $uid) {
+                // Orang lain sedang login → denied
+                Log::info('[AutomationService] Denied: another user already logged in. UID: ' . $uid);
+                MQTT::publish('lab1/control/login', json_encode([
+                    'statusAccess' => 'denied',
+                    'user'         => 'none',
+                    'uid'          => 'none',
+                ]));
+                return;
+            }
+
+            // Set state login di DB
+            $deviceState->update([
+                'login' => true,
+                'user'  => $card->pengguna,
+                'UID'   => $uid,
+            ]);
+
+            Log::info('[AutomationService] LOGIN: ' . $card->pengguna . ' UID: ' . $uid);
+
+            MQTT::publish('lab1/control/login', json_encode([
+                'statusAccess' => 'success',
+                'user'         => $card->pengguna,
+                'uid'          => $uid,
+            ]));
+        }
     }
 
     /**
-     * Normalisasi UID dari ESP32.
-     * ESP32 mengirim format: " AB CD EF 01" (dengan spasi, uppercase)
-     * Database menyimpan dalam format yang sama atau tanpa spasi.
-     * Fungsi ini trim & uppercase agar konsisten.
+     * Normalisasi UID: trim & uppercase, konsisten dengan ESP32 format "AB CD EF 01".
      */
     private function normalizeUid(string $uid): string
     {
