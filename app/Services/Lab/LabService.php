@@ -11,35 +11,60 @@ class LabService
     /**
      * Ambil semua data lab: sensor terbaru, chart, status perangkat.
      *
-     * Strategi:
-     * - Cache di-update oleh MqttSubscribe setiap kali data masuk.
-     * - Jika cache miss (MQTT belum jalan / TTL habis), fallback ke DB.
-     * - Widget Filament polling tiap 5 detik → pastikan selalu dapat data.
+     * Aturan:
+     * - 'device' SELALU dari DB (fresh), bukan cache — supaya toggle langsung keliatan
+     * - 'device' dikembalikan sebagai array KOSONG jika device offline
+     *   (berdasarkan last_seen), sehingga semua widget otomatis masuk state offline
+     * - 'latest' & 'chart' dari cache jika ada, fallback ke DB
      */
     public function getAll(): array
     {
-        $cache = Cache::get('lab.dashboard');
+        $cache  = Cache::get('lab.dashboard');
+        $device = $this->getDeviceIfOnline();
 
         if ($cache && ! empty($cache['latest'])) {
             return [
                 'latest' => $cache['latest'],
                 'chart'  => collect($cache['chart'] ?? []),
-                'device' => $cache['device'] ?? $this->getDeviceFromDb(),
+                'device' => $device,
             ];
         }
 
-        // Fallback: baca langsung dari DB
-        return $this->getFromDb();
+        return $this->getFromDb($device);
+    }
+
+    /**
+     * Ambil raw DeviceState dari DB (untuk keperluan toggle action,
+     * tidak peduli online/offline — kita butuh current DB state).
+     */
+    public function getRawDevice(): ?DeviceState
+    {
+        return DeviceState::where('device', 'esp32_smartlab_1')->first();
     }
 
     // -----------------------------------------------------------------------
     // PRIVATE
     // -----------------------------------------------------------------------
 
-    private function getFromDb(): array
+    /**
+     * Kembalikan device state sebagai array HANYA jika device online.
+     * Jika offline atau belum pernah konek → return array kosong [].
+     * Array kosong = semua widget tampilkan state offline.
+     */
+    private function getDeviceIfOnline(): array
+    {
+        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
+
+        if (! $device || ! $device->isOnline()) {
+            return [];
+        }
+
+        return $device->toArray();
+    }
+
+    private function getFromDb(array $device): array
     {
         $latest = LogSensor::latest('record_at')->first();
-        $device = $this->getDeviceFromDb();
         $chart  = LogSensor::latest('record_at')
             ->limit(20)
             ->get()
@@ -51,11 +76,5 @@ class LabService
             'device' => $device,
             'chart'  => $chart,
         ];
-    }
-
-    private function getDeviceFromDb(): array
-    {
-        $device = DeviceState::where('device', 'esp32_smartlab_1')->first();
-        return $device ? $device->toArray() : [];
     }
 }
